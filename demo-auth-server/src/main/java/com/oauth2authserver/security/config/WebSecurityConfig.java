@@ -10,6 +10,7 @@ import com.oauth2authserver.security.handler.CustomAuthenticationSuccessHandler;
 import com.oauth2authserver.security.filter.ResourceOwnerAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -22,6 +23,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.provider.endpoint.FrameworkEndpointHandlerMapping;
+import org.springframework.security.oauth2.provider.endpoint.AuthorizationEndpoint;
+import org.springframework.security.oauth2.provider.approval.Approval.ApprovalStatus;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -45,29 +49,35 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
-			.cors()
-				.and()
-			.authorizeRequests()
-				.antMatchers("/error**", "/login*/**", "/h2-console/**").permitAll()
-				.and()
-				.formLogin().permitAll().and()
-			.authorizeRequests()
-				.antMatchers("/api/**").authenticated()
-				.and()
-			.csrf().disable()
-			.headers().frameOptions().disable()
-				.and()
+				.authorizeRequests()
+				.anyRequest().authenticated()
+				.antMatchers("/","/**").permitAll()
+				.antMatchers(HttpMethod.OPTIONS).permitAll()
+				.and().httpBasic().and()
+				.csrf().disable()
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+				.and().headers().frameOptions().disable();
+//			.cors()
+//				.and()
+//			.authorizeRequests()
+//				.antMatchers("/error**", "/login*/**", "/h2-console/**").permitAll()
+//				.and()
+//				.formLogin().permitAll().and()
+//			.authorizeRequests()
+//				.antMatchers("/api/**").authenticated()
+//				.and()
+//			.csrf().disable()
+//			.headers().frameOptions().disable()
+//				.and()
 //			.sessionManagement()
 //				.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 //				.and()
-				.addFilter(authenticationFilter())
-//			.addFilterBefore(authenticationFilter(), ResourceOwnerAuthenticationFilter.class)
-		.exceptionHandling()
-			  .authenticationEntryPoint(authenticationEntryPoint())
-			  .accessDeniedHandler(accessDeniedHandler())
+////			.addFilterBefore(authenticationFilter(), ResourceOwnerAuthenticationFilter.class)
+//		.exceptionHandling()
+//			  .authenticationEntryPoint(authenticationEntryPoint())
+//			  .accessDeniedHandler(accessDeniedHandler())
 		;
 	}
-
 
 	@Override
 	@Bean
@@ -81,18 +91,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 		auth.authenticationProvider(authenticationProvider());
 	}
 
-	@Override
-	public void configure(WebSecurity web) throws Exception {
-
-		web.ignoring()
-		   	.antMatchers("/css/**")
-		   	.antMatchers("/vendor/**")
-		   	.antMatchers("/js/**")
-		   	.antMatchers("/favicon*/**")
-		   	.antMatchers("/img/**")
-		;
-	}
-
 
 	@Bean
 	public AuthenticationProvider authenticationProvider() {
@@ -101,39 +99,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 		authenticationProvider.setPasswordEncoder(passwordEncoder);
 
 		return authenticationProvider;
-//		return new CustomAuthenticationProvider();
 	}
-////
-////	@Bean
-////	public CorsConfigurationSource corsConfigurationSource() {
-////		CorsConfiguration configuration = new CorsConfiguration();
-////		configuration.setAllowedOrigins(Arrays.asList("*"));
-////		configuration.setAllowedMethods(Arrays.asList("*"));
-////		configuration.setAllowedHeaders(Arrays.asList("*"));
-////		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-////		source.registerCorsConfiguration("/**", configuration);
-////
-////		return source;
-////	}
-//
-	@Bean
-	public ResourceOwnerAuthenticationFilter authenticationFilter() throws Exception {
-		ResourceOwnerAuthenticationFilter filter = new ResourceOwnerAuthenticationFilter(authenticationManager());
-		filter.setFilterProcessesUrl("/login");
-		filter.setUsernameParameter("username");
-		filter.setPasswordParameter("password");
 
-		filter.setAuthenticationSuccessHandler(authenticationSuccessHandler());
-		filter.setAuthenticationFailureHandler(authenticationFailureHandler());
-
-		filter.afterPropertiesSet();
-
-		return filter;
-	}
 	@Bean
 	public AccessDeniedHandler accessDeniedHandler(){
 		return new CustomAccessDeniedHandler();
 	}
+
 	@Bean
 	public AuthenticationEntryPoint authenticationEntryPoint() {
 		return new LoginUrlAuthenticationEntryPoint("/loginPage");

@@ -1,0 +1,8 @@
+demo-auth-server/build/*
+demo-auth-server/out/*
+demo-resource-server/build/*
+demo-resource-server/out/*
+demo-client/build/*
+demo-client/out/*
+.gradle/*
+.idea/*

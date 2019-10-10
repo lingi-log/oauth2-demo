@@ -50,8 +50,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 	protected void configure(HttpSecurity http) throws Exception {
 		http
 				.authorizeRequests()
+				.antMatchers("/h2-console/**").permitAll()
 				.anyRequest().authenticated()
-				.antMatchers("/","/**").permitAll()
+				.antMatchers("/", "/**").permitAll()
 				.antMatchers(HttpMethod.OPTIONS).permitAll()
 				.and().httpBasic().and()
 				.csrf().disable()
